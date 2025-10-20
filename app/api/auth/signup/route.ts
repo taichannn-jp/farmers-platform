@@ -60,6 +60,7 @@ export async function POST(request: NextRequest) {
           description: 'プロフィール未設定',
           latitude: 35.6812, // デフォルト位置（東京）
           longitude: 139.7671,
+          isVerified: true, // 新規登録でも即座に表示
         },
       });
       farmerId = farmer.id;

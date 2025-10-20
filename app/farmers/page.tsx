@@ -23,9 +23,7 @@ export default async function FarmersPage() {
         },
       },
     },
-    where: {
-      isVerified: true,
-    },
+    // 全ての農家を表示（検証済みでなくてもOK）
     orderBy: {
       createdAt: 'desc',
     },
