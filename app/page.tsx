@@ -41,24 +41,24 @@ export default async function HomePage() {
     <div className="min-h-screen">
       {/* ヘッダー */}
       <header className="bg-white/90 backdrop-blur-sm shadow-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4">
+        <div className="container mx-auto px-2 sm:px-4 py-2 sm:py-4">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-green-600">🌾 農家さんプラットフォーム</h1>
-            <nav className="flex items-center gap-4">
-              <a href="/vegetables" className="text-gray-700 hover:text-green-600">
-                野菜を探す
+            <h1 className="text-base sm:text-2xl font-bold text-green-600">🌾 農家さん</h1>
+            <nav className="flex items-center gap-1 sm:gap-4 text-xs sm:text-base">
+              <a href="/vegetables" className="text-gray-700 hover:text-green-600 px-1 sm:px-2">
+                野菜
               </a>
-              <a href="/farmers" className="text-gray-700 hover:text-green-600">
-                農家さん一覧
+              <a href="/farmers" className="text-gray-700 hover:text-green-600 px-1 sm:px-2">
+                農家
               </a>
-              <a href="/nearby" className="text-gray-700 hover:text-green-600">
-                近くの農家さん
+              <a href="/nearby" className="text-gray-700 hover:text-green-600 px-1 sm:px-2 hidden sm:inline">
+                近く
               </a>
-              <a href="/favorites" className="text-gray-700 hover:text-green-600">
-                お気に入り
+              <a href="/favorites" className="text-gray-700 hover:text-green-600 px-1 sm:px-2">
+                ♥
               </a>
-              <a href="/cart" className="text-gray-700 hover:text-green-600">
-                カート
+              <a href="/cart" className="text-gray-700 hover:text-green-600 px-1 sm:px-2">
+                🛒
               </a>
               <AuthNav />
             </nav>

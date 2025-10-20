@@ -4,6 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { MapPin, Leaf, ArrowLeft, Phone, Mail } from "lucide-react";
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default async function FarmersPage() {
   const farmers = await prisma.farmer.findMany({
     include: {
@@ -40,16 +43,16 @@ export default async function FarmersPage() {
     <div className="min-h-screen bg-gray-50">
       {/* ヘッダー */}
       <header className="border-b bg-white sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4">
+        <div className="container mx-auto px-2 sm:px-4 py-2 sm:py-4">
           <div className="flex items-center justify-between">
-            <Link href="/" className="flex items-center gap-2">
-              <Leaf className="h-8 w-8 text-green-600" />
-              <span className="text-2xl font-bold text-green-600">農家プラットフォーム</span>
+            <Link href="/" className="flex items-center gap-1 sm:gap-2">
+              <Leaf className="h-5 w-5 sm:h-8 sm:w-8 text-green-600" />
+              <span className="text-base sm:text-2xl font-bold text-green-600">農家</span>
             </Link>
-            <Button asChild variant="outline">
+            <Button asChild variant="outline" size="sm" className="text-xs sm:text-base">
               <Link href="/">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                トップへ戻る
+                <ArrowLeft className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                戻る
               </Link>
             </Button>
           </div>
