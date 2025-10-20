@@ -1,0 +1,177 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ユーザー情報
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  password      String
+  role          String    @default("CUSTOMER") // CUSTOMER, FARMER, ADMIN
+  avatar        String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  // リレーション
+  farmer        Farmer?
+  favorites     Favorite[]
+  orders        Order[]
+  reviews       Review[]
+  messages      Message[]
+}
+
+// 農家情報
+model Farmer {
+  id            String    @id @default(cuid())
+  userId        String    @unique
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  farmName      String
+  description   String?
+  phone         String?
+  address       String
+  latitude      Float
+  longitude     Float
+  profileImage  String?
+  coverImage    String?
+  
+  isVerified    Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  // リレーション
+  vegetables    Vegetable[]
+  orders        Order[]
+  reviews       Review[]
+  messages      Message[]
+}
+
+// 野菜情報
+model Vegetable {
+  id            String    @id @default(cuid())
+  farmerId      String
+  farmer        Farmer    @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+  
+  name          String
+  variety       String?   // 品種名（例：桃太郎、章姫など）
+  category      String
+  description   String?
+  price         Int       // 円単位
+  unit          String    @default("kg")
+  stock         Int       @default(0)
+  images        String    @default("[]") // JSON array of image URLs
+  
+  harvestStart  DateTime?
+  harvestEnd    DateTime?
+  isOrganic     Boolean   @default(false)
+  isRare        Boolean   @default(false)  // 珍しい品種
+  isIrregular   Boolean   @default(false)  // 規格外商品
+  isBundle      Boolean   @default(false)  // 詰め合わせセット
+  bundleContents String?  // 詰め合わせの内容（JSON）
+  discountRate  Int       @default(0)      // 割引率（%）
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  // リレーション
+  favorites     Favorite[]
+  orderItems    OrderItem[]
+  reviews       Review[]
+}
+
+// お気に入り
+model Favorite {
+  id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  vegetableId   String?
+  vegetable     Vegetable? @relation(fields: [vegetableId], references: [id], onDelete: Cascade)
+  
+  createdAt     DateTime  @default(now())
+  
+  @@unique([userId, vegetableId])
+}
+
+// 注文
+model Order {
+  id            String      @id @default(cuid())
+  userId        String
+  user          User        @relation(fields: [userId], references: [id])
+  
+  farmerId      String
+  farmer        Farmer      @relation(fields: [farmerId], references: [id])
+  
+  status        String      @default("PENDING") // PENDING, CONFIRMED, PREPARING, SHIPPED, DELIVERED, CANCELLED
+  totalAmount   Int
+  
+  shippingAddress String
+  shippingDate    DateTime?
+  deliveryDate    DateTime?
+  
+  stripePaymentId String?
+  
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  
+  // リレーション
+  items         OrderItem[]
+}
+
+// 注文アイテム
+model OrderItem {
+  id            String    @id @default(cuid())
+  orderId       String
+  order         Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  vegetableId   String
+  vegetable     Vegetable @relation(fields: [vegetableId], references: [id])
+  
+  quantity      Int
+  price         Int       // 注文時の価格
+  
+  createdAt     DateTime  @default(now())
+}
+
+// レビュー・評価
+model Review {
+  id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  farmerId      String?
+  farmer        Farmer?   @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+  
+  vegetableId   String?
+  vegetable     Vegetable? @relation(fields: [vegetableId], references: [id], onDelete: Cascade)
+  
+  rating        Int       // 1-5
+  comment       String?
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+// メッセージ
+model Message {
+  id            String    @id @default(cuid())
+  senderId      String
+  sender        User      @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  
+  farmerId      String
+  farmer        Farmer    @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+  
+  content       String
+  isRead        Boolean   @default(false)
+  
+  createdAt     DateTime  @default(now())
+}
