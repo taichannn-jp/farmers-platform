@@ -1,41 +1,56 @@
+'use client';
+
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { MapPin, Leaf, ArrowLeft, Phone, Mail } from "lucide-react";
+import { MapPin, Leaf, ArrowLeft, Phone, Mail, Star } from "lucide-react";
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+interface Farmer {
+  id: string;
+  farmName: string;
+  description: string;
+  address: string;
+  phone?: string;
+  user: {
+    email: string;
+  };
+  _count: {
+    vegetables: number;
+    reviews: number;
+  };
+  avgRating?: number;
+}
 
-export default async function FarmersPage() {
-  const farmers = await prisma.farmer.findMany({
-    include: {
-      user: true,
-      _count: {
-        select: { 
-          vegetables: true,
-          reviews: true,
-        },
-      },
-      reviews: {
-        select: {
-          rating: true,
-        },
-      },
-    },
-    // 全ての農家を表示（検証済みでなくてもOK）
-    orderBy: {
-      createdAt: 'desc',
-    },
-  });
+export default function FarmersPage() {
+  const [farmers, setFarmers] = useState<Farmer[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // 平均評価を計算
-  const farmersWithRating = farmers.map(farmer => {
-    const avgRating = farmer.reviews.length > 0
-      ? farmer.reviews.reduce((sum, review) => sum + review.rating, 0) / farmer.reviews.length
-      : 0;
-    return { ...farmer, avgRating };
-  });
+  useEffect(() => {
+    async function fetchFarmers() {
+      try {
+        const res = await fetch('/api/farmers');
+        const data = await res.json();
+        setFarmers(data);
+      } catch (error) {
+        console.error('農家取得エラー:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchFarmers();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">読み込み中...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -58,97 +73,83 @@ export default async function FarmersPage() {
       </header>
 
       {/* メインコンテンツ */}
-      <div className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">農家さん一覧</h1>
-          <p className="text-gray-600">こだわりの野菜を作る農家さんをご紹介します</p>
+          <h1 className="text-3xl font-bold mb-2">農家さん一覧</h1>
+          <p className="text-gray-600">
+            新鮮な野菜を提供する農家さんをご紹介します
+          </p>
         </div>
 
-        {/* フィルター */}
-        <div className="mb-8 p-4 bg-white rounded-lg border">
-          <div className="flex flex-wrap gap-4">
-            <div className="flex-1 min-w-[200px]">
-              <input
-                type="text"
-                placeholder="農家名・地域で検索..."
-                className="w-full px-4 py-2 border rounded-md"
-              />
-            </div>
-            <Button variant="outline">距離で並び替え</Button>
-            <Button variant="outline">評価が高い順</Button>
-          </div>
-        </div>
-
-        {/* 農家グリッド */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {farmersWithRating.map((farmer) => (
-            <Card key={farmer.id} className="hover:shadow-lg transition-shadow">
-              {farmer.coverImage && (
-                <div className="h-48 bg-gray-200 relative overflow-hidden">
-                  <img
-                    src={farmer.coverImage}
-                    alt={farmer.farmName}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              )}
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <CardTitle className="text-xl">{farmer.farmName}</CardTitle>
-                    <CardDescription className="flex items-center gap-1 mt-1">
-                      <MapPin className="h-4 w-4" />
-                      {farmer.address}
-                    </CardDescription>
-                  </div>
-                  {farmer.isVerified && (
-                    <div className="bg-blue-100 text-blue-600 px-2 py-1 rounded text-xs font-semibold">
-                      認証済み
+        {farmers.length === 0 ? (
+          <Card>
+            <CardContent className="py-12 text-center">
+              <Leaf className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-600">農家さんが見つかりませんでした</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {farmers.map((farmer) => (
+              <Card key={farmer.id} className="hover:shadow-lg transition-shadow">
+                <CardHeader>
+                  <div className="flex items-start justify-between mb-2">
+                    <div>
+                      <CardTitle className="text-xl mb-1">{farmer.farmName}</CardTitle>
+                      <div className="flex items-center gap-1 text-yellow-500">
+                        <Star className="h-4 w-4 fill-current" />
+                        <span className="text-sm font-medium">
+                          {farmer.avgRating ? farmer.avgRating.toFixed(1) : '0.0'}
+                        </span>
+                        <span className="text-gray-500 text-xs">
+                          ({farmer._count.reviews}件)
+                        </span>
+                      </div>
                     </div>
-                  )}
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-gray-600 line-clamp-3 mb-4">
-                  {farmer.description}
-                </p>
-                <div className="flex flex-wrap gap-4 text-sm">
-                  <div>
-                    <span className="text-gray-500">登録野菜:</span>
-                    <span className="font-semibold ml-1">{farmer._count.vegetables}種類</span>
                   </div>
-                  <div>
-                    <span className="text-gray-500">評価:</span>
-                    <span className="font-semibold ml-1">
-                      {farmer.avgRating > 0 ? `★ ${farmer.avgRating.toFixed(1)}` : '未評価'}
-                    </span>
+                  <CardDescription className="line-clamp-2">
+                    {farmer.description}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center gap-2 text-gray-600">
+                      <MapPin className="h-4 w-4" />
+                      <span>{farmer.address}</span>
+                    </div>
+                    {farmer.phone && (
+                      <div className="flex items-center gap-2 text-gray-600">
+                        <Phone className="h-4 w-4" />
+                        <span>{farmer.phone}</span>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2 text-gray-600">
+                      <Mail className="h-4 w-4" />
+                      <span>{farmer.user.email}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-green-600 font-medium">
+                      <Leaf className="h-4 w-4" />
+                      <span>{farmer._count.vegetables}種類の野菜を出品中</span>
+                    </div>
                   </div>
-                </div>
-                {farmer.phone && (
-                  <div className="flex items-center gap-2 mt-3 text-sm text-gray-600">
-                    <Phone className="h-4 w-4" />
-                    {farmer.phone}
-                  </div>
-                )}
-              </CardContent>
-              <CardFooter className="flex gap-2">
-                <Button asChild className="flex-1">
-                  <Link href={`/farmers/${farmer.id}`}>詳細を見る</Link>
-                </Button>
-                <Button asChild variant="outline">
-                  <Link href={`/farmers/${farmer.id}/vegetables`}>野菜一覧</Link>
-                </Button>
-              </CardFooter>
-            </Card>
-          ))}
-        </div>
-
-        {farmers.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-gray-500 text-lg">現在、登録されている農家さんはありません。</p>
+                </CardContent>
+                <CardFooter className="flex gap-2">
+                  <Button asChild variant="outline" className="flex-1">
+                    <Link href={`/farmers/${farmer.id}`}>
+                      詳細を見る
+                    </Link>
+                  </Button>
+                  <Button asChild className="flex-1">
+                    <Link href={`/farmers/${farmer.id}/vegetables`}>
+                      野菜を見る
+                    </Link>
+                  </Button>
+                </CardFooter>
+              </Card>
+            ))}
           </div>
         )}
-      </div>
+      </main>
     </div>
   );
 }

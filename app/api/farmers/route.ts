@@ -49,11 +49,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ farmers: [{ ...farmer, avgRating }] });
     }
 
-    // 通常の農家一覧取得
+    // 通常の農家一覧取得（全ての農家を表示）
     const farmers = await prisma.farmer.findMany({
-      where: {
-        isVerified: true,
-      },
       include: {
         user: true,
         _count: {
@@ -82,7 +79,7 @@ export async function GET(request: NextRequest) {
       return { ...farmer, avgRating };
     });
 
-    return NextResponse.json({ farmers: farmersWithRating });
+    return NextResponse.json(farmersWithRating);
   } catch (error) {
     console.error('農家取得エラー:', error);
     return NextResponse.json(

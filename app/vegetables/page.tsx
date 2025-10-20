@@ -1,26 +1,61 @@
+'use client';
+
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatPrice } from "@/lib/utils";
-import { MapPin, Leaf, ArrowLeft } from "lucide-react";
+import { MapPin, Leaf, ArrowLeft, Package } from "lucide-react";
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+interface Vegetable {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  unit: string;
+  stock: number;
+  category: string;
+  isOrganic: boolean;
+  imageUrl?: string;
+  farmer: {
+    id: string;
+    farmName: string;
+    address: string;
+    user: {
+      name: string;
+    };
+  };
+}
 
-export default async function VegetablesPage() {
-  const vegetables = await prisma.vegetable.findMany({
-    include: {
-      farmer: {
-        include: {
-          user: true,
-        },
-      },
-    },
-    orderBy: {
-      createdAt: 'desc',
-    },
-  });
+export default function VegetablesPage() {
+  const [vegetables, setVegetables] = useState<Vegetable[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchVegetables() {
+      try {
+        const res = await fetch('/api/vegetables');
+        const data = await res.json();
+        setVegetables(data);
+      } catch (error) {
+        console.error('野菜取得エラー:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchVegetables();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">読み込み中...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -43,113 +78,94 @@ export default async function VegetablesPage() {
       </header>
 
       {/* メインコンテンツ */}
-      <div className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">野菜一覧</h1>
-          <p className="text-gray-600">新鮮な野菜を農家さんから直接購入できます</p>
+          <h1 className="text-3xl font-bold mb-2">野菜一覧</h1>
+          <p className="text-gray-600">
+            農家さんから直接お届けする新鮮な野菜
+          </p>
         </div>
 
-        {/* フィルター（今後実装予定） */}
-        <div className="mb-8 p-4 bg-white rounded-lg border">
-          <div className="flex flex-wrap gap-4">
-            <div className="flex-1 min-w-[200px]">
-              <input
-                type="text"
-                placeholder="野菜名で検索..."
-                className="w-full px-4 py-2 border rounded-md"
-              />
-            </div>
-            <Button variant="outline">カテゴリで絞り込み</Button>
-            <Button variant="outline">有機栽培のみ</Button>
-            <Button variant="outline">距離で並び替え</Button>
-          </div>
-        </div>
-
-        {/* 野菜グリッド */}
-        <div className="grid md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {vegetables.map((vegetable) => (
-            <Card key={vegetable.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-              <div className="aspect-square bg-gray-200 relative">
-                {JSON.parse(vegetable.images)[0] && (
-                  <img
-                    src={JSON.parse(vegetable.images)[0]}
-                    alt={vegetable.name}
-                    className="w-full h-full object-cover"
-                  />
-                )}
-                <div className="absolute top-2 right-2 flex flex-col gap-1">
-                  {vegetable.isOrganic && (
-                    <div className="bg-green-600 text-white px-2 py-1 rounded-full text-xs font-semibold">
-                      有機栽培
-                    </div>
-                  )}
-                  {vegetable.isRare && (
-                    <div className="bg-purple-600 text-white px-2 py-1 rounded-full text-xs font-semibold">
-                      珍しい品種
-                    </div>
-                  )}
-                  {vegetable.isIrregular && (
-                    <div className="bg-orange-600 text-white px-2 py-1 rounded-full text-xs font-semibold">
-                      訳あり {vegetable.discountRate}%OFF
-                    </div>
-                  )}
-                  {vegetable.isBundle && (
-                    <div className="bg-blue-600 text-white px-2 py-1 rounded-full text-xs font-semibold">
-                      詰め合わせ
-                    </div>
-                  )}
-                </div>
-                {vegetable.stock === 0 && (
-                  <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                    <span className="text-white font-bold text-lg">売り切れ</span>
+        {vegetables.length === 0 ? (
+          <Card>
+            <CardContent className="py-12 text-center">
+              <Leaf className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-600">野菜が見つかりませんでした</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {vegetables.map((vegetable) => (
+              <Card key={vegetable.id} className="hover:shadow-lg transition-shadow overflow-hidden">
+                {vegetable.imageUrl && (
+                  <div className="h-48 bg-gray-100 overflow-hidden">
+                    <img
+                      src={vegetable.imageUrl}
+                      alt={vegetable.name}
+                      className="w-full h-full object-cover"
+                    />
                   </div>
                 )}
-              </div>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  {vegetable.name}
-                  {vegetable.variety && (
-                    <span className="text-sm font-normal text-gray-500">({vegetable.variety})</span>
-                  )}
-                </CardTitle>
-                <CardDescription className="flex items-center gap-1">
-                  <MapPin className="h-4 w-4" />
-                  {vegetable.farmer.farmName}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-gray-600 line-clamp-2 mb-2">
-                  {vegetable.description}
-                </p>
-                <div className="text-sm text-gray-500">
-                  在庫: {vegetable.stock > 0 ? `${vegetable.stock}${vegetable.unit}` : '売り切れ'}
-                </div>
-              </CardContent>
-              <CardFooter className="flex flex-col gap-2">
-                <div className="w-full flex items-center justify-between">
-                  <div>
-                    <div className="text-2xl font-bold text-green-600">
-                      {formatPrice(vegetable.price)}
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <CardTitle className="text-xl mb-1">{vegetable.name}</CardTitle>
+                      <div className="flex flex-wrap gap-2 mb-2">
+                        <span className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded">
+                          {vegetable.category}
+                        </span>
+                        {vegetable.isOrganic && (
+                          <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded">
+                            有機栽培
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <div className="text-sm text-gray-500">/ {vegetable.unit}</div>
+                    <div className="text-right ml-2">
+                      <div className="text-2xl font-bold text-green-600">
+                        {formatPrice(vegetable.price)}
+                      </div>
+                      <div className="text-xs text-gray-500">/{vegetable.unit}</div>
+                    </div>
                   </div>
-                </div>
-                <Button asChild className="w-full" disabled={vegetable.stock === 0}>
-                  <Link href={`/vegetables/${vegetable.id}`}>
-                    {vegetable.stock > 0 ? '詳細を見る' : '売り切れ'}
-                  </Link>
-                </Button>
-              </CardFooter>
-            </Card>
-          ))}
-        </div>
-
-        {vegetables.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-gray-500 text-lg">現在、登録されている野菜はありません。</p>
+                  <CardDescription className="line-clamp-2">
+                    {vegetable.description}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center gap-2 text-gray-600">
+                      <Package className="h-4 w-4" />
+                      <span>在庫: {vegetable.stock}{vegetable.unit}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-gray-600">
+                      <Leaf className="h-4 w-4" />
+                      <span>{vegetable.farmer.farmName}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-gray-600">
+                      <MapPin className="h-4 w-4" />
+                      <span>{vegetable.farmer.address}</span>
+                    </div>
+                  </div>
+                </CardContent>
+                <CardFooter className="flex gap-2">
+                  <Button asChild variant="outline" className="flex-1">
+                    <Link href={`/vegetables/${vegetable.id}`}>
+                      詳細を見る
+                    </Link>
+                  </Button>
+                  <Button
+                    className="flex-1"
+                    disabled={vegetable.stock === 0}
+                  >
+                    {vegetable.stock === 0 ? '在庫なし' : 'カートに追加'}
+                  </Button>
+                </CardFooter>
+              </Card>
+            ))}
           </div>
         )}
-      </div>
+      </main>
     </div>
   );
 }
