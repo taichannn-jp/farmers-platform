@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
     }
 
     // 仮のカートデータ（後でセッション管理と統合）
-    const cartItems = [
+    const cartItems: any[] = [
       // クライアント側で管理
     ];
 
