@@ -2,7 +2,20 @@
 
 新鮮な野菜を農家さんから直接購入できるプラットフォーム
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/YOUR_USERNAME/farmers-platform)
+[![Deploy w## 🚀 クイックスタート
+
+```bash
+npm install
+npx prisma db push
+npm run db:seed
+npm run dev
+```
+
+http://localhost:3000
+
+## 🌐 デプロイ
+
+本番環境: Vercel + Neon Postgres://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/YOUR_USERNAME/farmers-platform)
 
 ## ✨ 実装済み機能
 
