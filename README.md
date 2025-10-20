@@ -170,3 +170,4 @@ MIT License
 - [Prisma](https://www.prisma.io/)
 - [shadcn/ui](https://ui.shadcn.com/)
 - [Unsplash](https://unsplash.com/) (画像提供)
+# Database initialized
