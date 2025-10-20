@@ -29,9 +29,9 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { userId, items, shippingAddress, totalAmount } = body;
+    const { userId, items, shippingAddress, totalAmount, farmerId } = body;
 
-    if (!userId || !items || items.length === 0) {
+    if (!userId || !farmerId || !items || items.length === 0) {
       return NextResponse.json(
         { error: '必須項目が不足しています' },
         { status: 400 }
@@ -41,7 +41,12 @@ export async function POST(request: NextRequest) {
     // トランザクションで注文を作成
     const order = await prisma.order.create({
       data: {
-        userId,
+        user: {
+          connect: { id: userId }
+        },
+        farmer: {
+          connect: { id: farmerId }
+        },
         totalAmount,
         status: 'PENDING',
         shippingAddress,
